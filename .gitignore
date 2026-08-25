@@ -1,0 +1,20 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# node
+node_modules/
+dist/
+
+# tauri
+app/src-tauri/target/
+app/src-tauri/gen/
+
+# misc
+.DS_Store
+*.log
+
+# model artifacts
+fused_model/
+*.safetensors
