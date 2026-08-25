@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+import json
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -29,8 +30,17 @@ def adapters():
     out = []
     if config.ADAPTERS_DIR.exists():
         for entry in sorted(config.ADAPTERS_DIR.iterdir()):
+            meta_file = entry / "meta.json"
             if (entry / "adapters.safetensors").exists():
-                out.append({"id": entry.name, "path": str(entry)})
+                meta = {}
+                if meta_file.exists():
+                    meta = json.loads(meta_file.read_text())
+                out.append({
+                    "id": entry.name,
+                    "path": str(entry),
+                    "name": meta.get("name", entry.name),
+                    "base": meta.get("base"),
+                })
     return out
 
 

@@ -9,7 +9,7 @@ interface EvalSet {
 export default function Evaluate({ onStarted }: { onStarted: (jobId: string) => void }) {
   const [models, setModels] = useState<LocalModel[]>([]);
   const [model, setModel] = useState("");
-  const [adapters, setAdapters] = useState<{ id: string; path: string }[]>([]);
+  const [adapters, setAdapters] = useState<{ id: string; path: string; name: string }[]>([]);
   const [engines, setEngines] = useState<{ name: string; available: boolean }[]>([]);
   const [engine, setEngine] = useState("auto");
 
@@ -32,7 +32,7 @@ export default function Evaluate({ onStarted }: { onStarted: (jobId: string) => 
         if (!model && ms.length > 0) setModel(ms[0].path);
       })
       .catch(() => {});
-    api<{ id: string; path: string }[]>("/api/adapters").then(setAdapters).catch(() => {});
+    api<{ id: string; path: string; name: string }[]>("/api/adapters").then(setAdapters).catch(() => {});
     api<{ inference: { name: string; available: boolean }[] }>("/api/engines")
       .then((e) => setEngines(e.inference))
       .catch(() => {});
@@ -123,7 +123,7 @@ export default function Evaluate({ onStarted }: { onStarted: (jobId: string) => 
           <option value="">no adapter (base)</option>
           {adapters.map((a) => (
             <option key={a.id} value={a.path}>
-              adapter {a.id}
+              {a.name}
             </option>
           ))}
         </select>
@@ -133,7 +133,7 @@ export default function Evaluate({ onStarted }: { onStarted: (jobId: string) => 
           onChange={(e) => setDataset(e.target.value)}
           placeholder="/path/to/dataset (train.jsonl)"
         />
-        <button onClick={runLossEval} disabled={!model || !dataset}>
+        <button className="primary" onClick={runLossEval} disabled={!model || !dataset}>
           Run loss eval
         </button>
       </div>
@@ -200,11 +200,11 @@ export default function Evaluate({ onStarted }: { onStarted: (jobId: string) => 
           <option value="">no adapter</option>
           {adapters.map((a) => (
             <option key={a.id} value={a.path}>
-              adapter {a.id} ({engine === "auto" ? "mlx" : engine} only)
+              {a.name} ({engine === "auto" ? "mlx" : engine} only)
             </option>
           ))}
         </select>
-        <button onClick={runQa} disabled={!model || !runSet}>
+        <button className="primary" onClick={runQa} disabled={!model || !runSet}>
           Run
         </button>
       </div>

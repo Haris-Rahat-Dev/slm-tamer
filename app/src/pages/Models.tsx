@@ -101,7 +101,7 @@ export default function Models() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="search models…"
         />
-        <button type="submit">Search</button>
+        <button className="primary" type="submit">Search</button>
       </form>
 
       {error && <p className="error">{error}</p>}

@@ -22,23 +22,25 @@ export default function App() {
       <nav>
         <h1 className="brand">slm-tamer</h1>
         <button className={tab === "models" ? "on" : ""} onClick={() => setTab("models")}>
-          Models
+          <span className="icon">⬇</span> Models
         </button>
         <button className={tab === "data" ? "on" : ""} onClick={() => setTab("data")}>
-          Data
+          <span className="icon">▤</span> Data
         </button>
         <button className={tab === "train" ? "on" : ""} onClick={() => setTab("train")}>
-          Train
+          <span className="icon">⚡</span> Train
         </button>
         <button className={tab === "evaluate" ? "on" : ""} onClick={() => setTab("evaluate")}>
-          Evaluate
+          <span className="icon">◎</span> Evaluate
         </button>
         <button className={tab === "chat" ? "on" : ""} onClick={() => setTab("chat")}>
-          Chat
+          <span className="icon">✦</span> Chat
         </button>
         <button className={tab === "jobs" ? "on" : ""} onClick={() => setTab("jobs")}>
-          Jobs
+          <span className="icon">☰</span> Jobs
         </button>
+        <div className="spacer" />
+        <div className="hint">tame small models<br />for your domain</div>
       </nav>
       <main>
         {tab === "models" && <Models />}

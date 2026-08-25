@@ -8,7 +8,7 @@ interface Msg {
 
 export default function Chat() {
   const [models, setModels] = useState<LocalModel[]>([]);
-  const [adapters, setAdapters] = useState<{ id: string; path: string }[]>([]);
+  const [adapters, setAdapters] = useState<{ id: string; path: string; name: string; base: string | null }[]>([]);
   const [inferenceEngines, setInferenceEngines] = useState<{ name: string; available: boolean; adapter_support: boolean }[]>([]);
   const [engine, setEngine] = useState("auto");
   const [model, setModel] = useState("");
@@ -26,7 +26,7 @@ export default function Chat() {
         if (ms.length > 0) setModel(ms[0].path);
       })
       .catch(() => {});
-    api<{ id: string; path: string }[]>("/api/adapters").then(setAdapters).catch(() => {});
+    api<{ id: string; path: string; name: string; base: string | null }[]>("/api/adapters").then(setAdapters).catch(() => {});
     api<{ inference: { name: string; available: boolean; adapter_support: boolean }[] }>("/api/engines")
       .then((e) => setInferenceEngines(e.inference))
       .catch(() => {});
@@ -35,6 +35,11 @@ export default function Chat() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const a = adapters.find((x) => x.path === adapter);
+    if (a?.base && a.base !== model) setAdapter("");
+  }, [model, adapters, adapter]);
 
   async function send() {
     const text = input.trim();
@@ -108,17 +113,36 @@ export default function Chat() {
         </select>
         <select value={adapter} onChange={(e) => setAdapter(e.target.value)}>
           <option value="">no adapter (base)</option>
-          {adapters.map((a) => (
-            <option key={a.id} value={a.path}>
-              adapter {a.id}
-            </option>
-          ))}
+          {adapters.map((a) => {
+            const mismatched = !!a.base && a.base !== model;
+            return (
+              <option key={a.id} value={a.path} disabled={mismatched}>
+                {a.name}{mismatched ? " (trained on a different base)" : ""}
+              </option>
+            );
+          })}
         </select>
       </div>
 
       <div className="thread">
         {messages.length === 0 && (
-          <p className="muted">Pick a base and optionally an adapter, then say something.</p>
+          <div className="chat-empty">
+            <div className="chat-empty-title">Say something.</div>
+            <p className="muted">
+              Pick a base, optionally attach a trained adapter, and talk to it.
+            </p>
+            <div className="suggestions">
+              {[
+                "What is slm-tamer?",
+                "Explain LoRA adapters in one paragraph.",
+                "Write a haiku about small models.",
+              ].map((s) => (
+                <button key={s} onClick={() => setInput(s)} disabled={busy}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
         {messages.map((m, i) => (
           <div key={i} className={`bubble ${m.role}`}>
@@ -132,7 +156,7 @@ export default function Chat() {
       </div>
 
       <form
-        className="row"
+        className="chat-form"
         onSubmit={(e) => {
           e.preventDefault();
           send();
@@ -141,10 +165,10 @@ export default function Chat() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="message…"
+          placeholder="Message…"
           disabled={busy}
         />
-        <button type="submit" disabled={busy}>
+        <button className="primary" type="submit" disabled={busy || !input.trim()}>
           Send
         </button>
       </form>

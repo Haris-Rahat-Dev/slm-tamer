@@ -5,7 +5,7 @@ export default function Train({ onStarted }: { onStarted: (jobId: string) => voi
   const [models, setModels] = useState<LocalModel[]>([]);
   const [trainingEngines, setTrainingEngines] = useState<{ name: string; available: boolean }[]>([]);
   const [presets, setPresets] = useState<Record<string, Record<string, number>>>({});
-  const [adapters, setAdapters] = useState<{ id: string; path: string }[]>([]);
+  const [adapters, setAdapters] = useState<{ id: string; path: string; name: string }[]>([]);
   const [model, setModel] = useState("");
   const [dataset, setDataset] = useState("");
   const [preset, setPreset] = useState("balanced");
@@ -34,7 +34,7 @@ export default function Train({ onStarted }: { onStarted: (jobId: string) => voi
         setPresets(e.presets);
       })
       .catch(() => {});
-    api<{ id: string; path: string }[]>("/api/adapters").then(setAdapters).catch(() => {});
+    api<{ id: string; path: string; name: string }[]>("/api/adapters").then(setAdapters).catch(() => {});
     api<{ converter: boolean; convert_python: boolean; ollama: boolean }>("/api/models/export-toolchain")
       .then(setToolchain)
       .catch(() => {});
@@ -99,29 +99,28 @@ export default function Train({ onStarted }: { onStarted: (jobId: string) => voi
         />
       </label>
 
-      <fieldset className="presets">
-        <legend>Preset</legend>
+      <div className="preset-grid">
         {Object.entries(presets).map(([name, cfg]) => (
-          <label key={name} className="radio">
-            <input
-              type="radio"
-              name="preset"
-              checked={preset === name}
-              onChange={() => setPreset(name)}
-            />
-            <span>
-              <b>{name}</b> · iters {cfg.iters} · bs {cfg.batch_size} · lr {cfg.learning_rate}
+          <button
+            key={name}
+            type="button"
+            className={`preset-card ${preset === name ? "on" : ""}`}
+            onClick={() => setPreset(name)}
+          >
+            <span className="preset-name">{name}</span>
+            <span className="preset-meta">
+              {cfg.iters} iters · batch {cfg.batch_size} · lr {cfg.learning_rate}
             </span>
-          </label>
+          </button>
         ))}
-      </fieldset>
+      </div>
 
-      <div className="row">
-        <button onClick={start} disabled={starting || !model || !dataset}>
+      <div className="row" style={{ marginTop: 18 }}>
+        <button className="primary" onClick={start} disabled={starting || !model || !dataset}>
           {starting ? "Starting…" : "Start training"}
         </button>
         {trainingEngines.map((e) => (
-          <span key={e.name} className={e.available ? "ok" : "muted"}>
+          <span key={e.name} className={e.available ? "ok" : "faint"}>
             engine: {e.name} ({e.available ? "available" : "unavailable"})
           </span>
         ))}
@@ -146,7 +145,7 @@ export default function Train({ onStarted }: { onStarted: (jobId: string) => voi
           <option value="">no adapter (base only)</option>
           {adapters.map((a) => (
             <option key={a.id} value={a.path}>
-              adapter {a.id}
+              {a.name}
             </option>
           ))}
         </select>
@@ -163,7 +162,7 @@ export default function Train({ onStarted }: { onStarted: (jobId: string) => voi
           />
           register in Ollama
         </label>
-        <button onClick={exportGguf} disabled={!model || !exportName}>
+        <button className="primary" onClick={exportGguf} disabled={!model || !exportName}>
           Export
         </button>
       </div>

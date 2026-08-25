@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from .. import db, engines
+from .. import config, db, engines
 from ..engines import EngineUnavailable, get_training
 from ..hub import resolve_model_path
 from ..jobs import manager
@@ -17,6 +17,7 @@ class TrainRequest(BaseModel):
     dataset: str
     preset: str = "balanced"
     engine: str = "auto"
+    name: str | None = None
     iters: int | None = None
     batch_size: int | None = None
     learning_rate: float | None = None
@@ -55,10 +56,23 @@ def train(req: TrainRequest):
         **cfg,
     }
 
-    def target(job):
-        return engine.train(job, model_path, dataset_dir, cfg)
+    adapter_name = (req.name or "").strip()
+    if not adapter_name:
+        base_label = Path(req.model.rstrip("/")).name.replace("--", "-")
+        adapter_name = f"{base_label}+{dataset_dir.name}"
 
-    job = manager.start("train", params, target)
+    def target(job):
+        result = engine.train(job, model_path, dataset_dir, cfg)
+        adapter_dir = Path(result["adapter_path"])
+        (adapter_dir / "meta.json").write_text(json.dumps({
+            "name": adapter_name,
+            "base": req.model,
+            "dataset": str(dataset_dir),
+            "iters": cfg["iters"],
+        }))
+        return result
+
+    job = manager.start("train", {**params, "name": adapter_name}, target)
     return {"job_id": job.id, "status": "queued", "config": cfg}
 
 

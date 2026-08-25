@@ -71,7 +71,7 @@ export default function Data({ onStarted }: { onStarted: (jobId: string) => void
         Dataset name
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="my-project" />
       </label>
-      <button onClick={ingest} disabled={!path || !name}>
+      <button className="primary" onClick={ingest} disabled={!path || !name}>
         Ingest
       </button>
       {error && <p className="error">{error}</p>}
